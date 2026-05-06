@@ -4140,3 +4140,77 @@
                 max-height: 200px;
             }
         }
+
+
+        :root[data-theme="dark"] {
+            --bg-primary: #0d0d0d;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #262626;
+            --bg-modal: #1f1f1f;
+            --bg-tertiary: #202020;
+            --bg-hover: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #8a8a8a;
+            --accent: #3b82f6;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --border: #333333;
+        }
+
+        .executive-bar {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 1rem;
+            padding: 1rem 2rem 0 2rem;
+        }
+        .exec-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        .exec-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.85rem;
+        }
+        .exec-row {
+            display: grid;
+            grid-template-columns: 90px 1fr 64px;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.7rem;
+            font-size: 0.85rem;
+        }
+        .exec-track {
+            height: 10px;
+            background: var(--bg-card);
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .exec-fill { height: 100%; border-radius: 999px; width: 0; }
+        .exec-fill.backlog { background: var(--accent-yellow); }
+        .exec-fill.progress { background: var(--accent-blue); }
+        .exec-fill.review { background: var(--accent-green); }
+        .exec-fill.done { background: #64748b; }
+        .project-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .project-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 150px;
+            gap: 0.75rem;
+            padding: 0.7rem 0.9rem;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
