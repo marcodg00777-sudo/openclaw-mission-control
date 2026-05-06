@@ -105,6 +105,7 @@
         </div>
         <div class="header-right">
             <span class="live-indicator live" id="live-indicator">Live</span>
+            <button class="btn btn-secondary" id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">☀️ Claro</button>
             <button class="btn btn-secondary" onclick="pollForUpdates(); window.location.reload()">↻ Refresh</button>
 
             <!-- Not Logged In -->
@@ -158,6 +159,20 @@
 
     <div class="filters" id="filters">
         <button class="filter-btn active" data-filter="all">All projects</button>
+    </div>
+
+    <div class="executive-bar" id="executive-bar">
+        <div class="exec-card">
+            <div class="exec-title">Distribución</div>
+            <div class="exec-row"><span>Backlog</span><div class="exec-track"><div class="exec-fill backlog" id="bar-backlog"></div></div><span id="bar-backlog-label">0</span></div>
+            <div class="exec-row"><span>En progreso</span><div class="exec-track"><div class="exec-fill progress" id="bar-progress"></div></div><span id="bar-progress-label">0</span></div>
+            <div class="exec-row"><span>Review</span><div class="exec-track"><div class="exec-fill review" id="bar-review"></div></div><span id="bar-review-label">0</span></div>
+            <div class="exec-row"><span>Done</span><div class="exec-track"><div class="exec-fill done" id="bar-done"></div></div><span id="bar-done-label">0</span></div>
+        </div>
+        <div class="exec-card">
+            <div class="exec-title">Proyectos activos</div>
+            <div id="project-summary" class="project-summary"></div>
+        </div>
     </div>
 
     <main class="main">
@@ -5612,6 +5627,7 @@ Output the consolidated content in clean Markdown format:`;
             document.getElementById('stat-progress').textContent = inProgress;
             document.getElementById('stat-week').textContent = review;
             document.getElementById('stat-completion').textContent = completion + '%';
+            renderExecutiveSummary(activeTasks);
         }
 
         // === TASK EDITING ===
@@ -9514,7 +9530,43 @@ ${learning.tags.map(t => `#${t}`).join(' ')}
         });
 
         // === INIT ===
+        const THEME_KEY = 'mc_theme';
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const btn = document.getElementById('theme-toggle');
+            if (btn) btn.textContent = theme === 'light' ? '☀️ Claro' : '🌙 Oscuro';
+            localStorage.setItem(THEME_KEY, theme);
+        }
+        function toggleTheme() {
+            const current = localStorage.getItem(THEME_KEY) || 'light';
+            applyTheme(current === 'light' ? 'dark' : 'light');
+        }
+        function renderExecutiveSummary(tasks) {
+            const activeTasks = (tasks || []).filter(t => !t.archived);
+            const total = activeTasks.length || 1;
+            const counts = {
+                backlog: activeTasks.filter(t => t.status === 'backlog').length,
+                in_progress: activeTasks.filter(t => t.status === 'in_progress').length,
+                review: activeTasks.filter(t => t.status === 'review').length,
+                done: activeTasks.filter(t => t.status === 'done').length,
+            };
+            [['backlog','bar-backlog','bar-backlog-label'],['in_progress','bar-progress','bar-progress-label'],['review','bar-review','bar-review-label'],['done','bar-done','bar-done-label']].forEach(([k,b,l]) => {
+                const pct = Math.round((counts[k] / total) * 100);
+                const bar = document.getElementById(b);
+                const label = document.getElementById(l);
+                if (bar) bar.style.width = pct + '%';
+                if (label) label.textContent = `${counts[k]} · ${pct}%`;
+            });
+            const projectCounts = {};
+            activeTasks.forEach(t => { const key = t.project || 'sin-proyecto'; projectCounts[key] = (projectCounts[key] || 0) + 1; });
+            const projectSummary = document.getElementById('project-summary');
+            if (projectSummary) {
+                projectSummary.innerHTML = Object.entries(projectCounts).sort((a,b) => b[1]-a[1]).map(([name,count]) => `<div class="project-pill"><strong>${name}</strong><span>${count}</span></div>`).join('');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
+            applyTheme(localStorage.getItem(THEME_KEY) || 'light');
             // Restore activity sidebar state
             if (localStorage.getItem('activity-collapsed') === 'true') {
                 const sidebar = document.getElementById('activity-sidebar');
