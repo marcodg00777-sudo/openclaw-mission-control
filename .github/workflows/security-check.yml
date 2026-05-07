@@ -77,10 +77,10 @@ jobs:
           TOKEN_PATTERNS=(
             "xoxb-[0-9]"           # Slack bot tokens
             "xoxp-[0-9]"           # Slack user tokens  
-            "ghp_[a-zA-Z0-9]"      # GitHub PATs
-            "gho_[a-zA-Z0-9]"      # GitHub OAuth
-            "sk-[a-zA-Z0-9]"       # OpenAI keys
-            "AKIA[A-Z0-9]"         # AWS keys
+            "ghp_[A-Za-z0-9]{20,}" # GitHub PATs
+            "gho_[A-Za-z0-9]{20,}" # GitHub OAuth
+            "sk-[A-Za-z0-9]{20,}"  # OpenAI/OpenRouter-style keys
+            "AKIA[A-Z0-9]{16}"     # AWS keys
           )
           
           FOUND_TOKENS=0

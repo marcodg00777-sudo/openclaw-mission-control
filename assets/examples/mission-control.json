@@ -4,7 +4,7 @@
     "hookToken": "YOUR_HOOK_TOKEN_HERE"
   },
   "workspace": {
-    "path": "/Users/your-username/your-workspace",
+    "path": "<your-workspace-path>",
     "tasksFile": "data/tasks.json",
     "snapshotFile": "data/.tasks-snapshot.json",
     "debugLog": "data/.webhook-debug.log"
