@@ -4,17 +4,37 @@
       "id": "mc-openclaw-001",
       "title": "Consolidar operación OpenClaw en WSL",
       "description": "Mantener WSL/Ubuntu como entorno operativo único de OpenClaw, validar estabilidad y documentar uso base.",
-      "status": "review",
+      "status": "done",
       "priority": "high",
       "project": "openclaw",
-      "tags": ["openclaw", "wsl", "infra"],
+      "tags": [
+        "openclaw",
+        "wsl",
+        "infra"
+      ],
       "createdAt": "2026-05-06T05:20:00.000Z",
       "updatedAt": "2026-05-06T05:20:00.000Z",
       "subtasks": [
-        { "id": "sub1", "title": "Respaldar instalación Windows", "done": true },
-        { "id": "sub2", "title": "Desinstalar OpenClaw de Windows", "done": true },
-        { "id": "sub3", "title": "Validar runtime WSL", "done": true },
-        { "id": "sub4", "title": "Documentar comandos base", "done": true }
+        {
+          "id": "sub1",
+          "title": "Respaldar instalación Windows",
+          "done": true
+        },
+        {
+          "id": "sub2",
+          "title": "Desinstalar OpenClaw de Windows",
+          "done": true
+        },
+        {
+          "id": "sub3",
+          "title": "Validar runtime WSL",
+          "done": true
+        },
+        {
+          "id": "sub4",
+          "title": "Documentar comandos base",
+          "done": true
+        }
       ],
       "comments": [
         {
@@ -23,7 +43,8 @@
           "createdAt": "2026-05-06T05:20:00.000Z"
         }
       ],
-      "sortOrder": 0
+      "sortOrder": 0,
+      "completedAt": "2026-05-07T02:28:54.075Z"
     },
     {
       "id": "mc-plaud-001",
@@ -32,13 +53,30 @@
       "status": "backlog",
       "priority": "high",
       "project": "plaud",
-      "tags": ["plaud", "notion", "flowmind", "automation"],
+      "tags": [
+        "plaud",
+        "notion",
+        "flowmind",
+        "automation"
+      ],
       "createdAt": "2026-05-06T05:20:00.000Z",
       "updatedAt": "2026-05-06T05:20:00.000Z",
       "subtasks": [
-        { "id": "sub1", "title": "Exact dedup en Notion por título/fuente", "done": false },
-        { "id": "sub2", "title": "Recovery pass para FlowMind-Pendiente", "done": false },
-        { "id": "sub3", "title": "Reducir duplicados entre estado local y FlowMind", "done": false }
+        {
+          "id": "sub1",
+          "title": "Exact dedup en Notion por título/fuente",
+          "done": false
+        },
+        {
+          "id": "sub2",
+          "title": "Recovery pass para FlowMind-Pendiente",
+          "done": false
+        },
+        {
+          "id": "sub3",
+          "title": "Reducir duplicados entre estado local y FlowMind",
+          "done": false
+        }
       ],
       "comments": [],
       "sortOrder": 1
@@ -50,12 +88,24 @@
       "status": "backlog",
       "priority": "medium",
       "project": "kostal",
-      "tags": ["kostal", "ops", "executive"],
+      "tags": [
+        "kostal",
+        "ops",
+        "executive"
+      ],
       "createdAt": "2026-05-06T05:20:00.000Z",
       "updatedAt": "2026-05-06T05:20:00.000Z",
       "subtasks": [
-        { "id": "sub1", "title": "Definir proyectos/milestones clave", "done": false },
-        { "id": "sub2", "title": "Mapear tareas recurrentes ejecutivas", "done": false }
+        {
+          "id": "sub1",
+          "title": "Definir proyectos/milestones clave",
+          "done": false
+        },
+        {
+          "id": "sub2",
+          "title": "Mapear tareas recurrentes ejecutivas",
+          "done": false
+        }
       ],
       "comments": [],
       "sortOrder": 2
@@ -67,15 +117,35 @@
       "status": "in_progress",
       "priority": "high",
       "project": "mission-control",
-      "tags": ["mission-control", "dashboard", "github-pages"],
+      "tags": [
+        "mission-control",
+        "dashboard",
+        "github-pages"
+      ],
       "createdAt": "2026-05-06T05:20:00.000Z",
       "updatedAt": "2026-05-06T05:20:00.000Z",
       "processingStartedAt": "2026-05-06T05:20:00.000Z",
       "subtasks": [
-        { "id": "sub1", "title": "Crear repo separado", "done": true },
-        { "id": "sub2", "title": "Activar GitHub Pages", "done": true },
-        { "id": "sub3", "title": "Limpiar demo data", "done": true },
-        { "id": "sub4", "title": "Validar tablero final", "done": false }
+        {
+          "id": "sub1",
+          "title": "Crear repo separado",
+          "done": true
+        },
+        {
+          "id": "sub2",
+          "title": "Activar GitHub Pages",
+          "done": true
+        },
+        {
+          "id": "sub3",
+          "title": "Limpiar demo data",
+          "done": true
+        },
+        {
+          "id": "sub4",
+          "title": "Validar tablero final",
+          "done": false
+        }
       ],
       "comments": [
         {
@@ -93,18 +163,34 @@
       "status": "backlog",
       "priority": "medium",
       "project": "rabbit-r1",
-      "tags": ["rabbit-r1", "device", "setup"],
+      "tags": [
+        "rabbit-r1",
+        "device",
+        "setup"
+      ],
       "createdAt": "2026-05-06T05:20:00.000Z",
       "updatedAt": "2026-05-06T05:20:00.000Z",
       "subtasks": [
-        { "id": "sub1", "title": "Levantar inventario/estado actual", "done": false },
-        { "id": "sub2", "title": "Definir casos de uso prioritarios", "done": false },
-        { "id": "sub3", "title": "Aplicar configuración inicial", "done": false }
+        {
+          "id": "sub1",
+          "title": "Levantar inventario/estado actual",
+          "done": false
+        },
+        {
+          "id": "sub2",
+          "title": "Definir casos de uso prioritarios",
+          "done": false
+        },
+        {
+          "id": "sub3",
+          "title": "Aplicar configuración inicial",
+          "done": false
+        }
       ],
       "comments": [],
       "sortOrder": 4
     }
   ],
   "version": 1,
-  "lastUpdated": "2026-05-06T05:20:00.000Z"
+  "lastUpdated": "2026-05-07T02:28:54.075Z"
 }
