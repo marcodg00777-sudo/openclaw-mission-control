@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Control - MoltBot</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Login Required Screen (shown when not authenticated) -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-container">
+            <div class="login-logo">🎯</div>
+            <h1 class="login-title">Mission Control</h1>
+            <p class="login-subtitle">Task & Project Management Dashboard</p>
+
+            <div class="login-card">
+                <h2>🔐 Login Required</h2>
+                <p>Connect your GitHub account to access the dashboard.</p>
+
+                <div class="login-steps">
+                    <div class="login-step">
+                        <span class="login-step-num">1</span>
+                        <div>
+                            <strong>Create a Personal Access Token</strong>
+                            <a href="https://github.com/settings/tokens/new?scopes=repo&description=Mission%20Control%20Dashboard" target="_blank" class="login-link">
+                                Create token on GitHub →
+                            </a>
+                        </div>
+                    </div>
+                    <div class="login-step">
+                        <span class="login-step-num">2</span>
+                        <div>
+                            <strong>Select "repo" scope</strong>
+                            <span class="login-hint">Allows read/write access to repositories</span>
+                        </div>
+                    </div>
+                    <div class="login-step">
+                        <span class="login-step-num">3</span>
+                        <div>
+                            <strong>Paste your token below</strong>
+                            <span class="login-hint">Starts with "ghp_"</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="login-form">
+                    <input type="password" id="login-token-input" class="login-input" placeholder="github_pat_example_token" autocomplete="off">
+                    <button id="login-btn" class="login-btn" onclick="handleLogin()">
+                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                        </svg>
+                        Connect with GitHub
+                    </button>
+                    <div id="login-error" class="login-error"></div>
+                    <div id="login-loading" class="login-loading">
+                        <div class="spinner"></div>
+                        <span>Validating...</span>
+                    </div>
+                </div>
+
+                <p class="login-security">🔒 Your token is stored locally and never sent anywhere except GitHub.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard (hidden until authenticated) -->
+    <div id="dashboard" class="dashboard" style="display: none;">
+
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <span>🎯</span>
+                <span>Mission Control</span>
+            </div>
+            <nav class="nav-tabs">
+                <div class="nav-tab active" data-view="tasks" onclick="switchView('tasks')">Tasks</div>
+                <div class="nav-tab" data-view="skills" onclick="switchView('skills')">Skills</div>
+                <div class="nav-tab" data-view="brain" onclick="switchView('brain')">Brain</div>
+                <div class="nav-tab" data-view="docs" onclick="switchView('docs')">Docs</div>
+                <div class="nav-tab" data-view="people" onclick="switchView('people')">Team</div>
+            </nav>
+            
+            <!-- Search -->
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <input type="text" 
+                           id="search-input" 
+                           class="search-input" 
+                           placeholder="Search tasks..." 
+                           oninput="handleSearch(this.value)"
+                           onkeydown="if(event.key==='Escape'){clearSearch()}">
+                    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21l-4.35-4.35"></path>
+                    </svg>
+                    <button class="search-clear" onmousedown="event.preventDefault()" onclick="clearSearch()" title="Clear search">×</button>
+                </div>
+                <span class="search-info" id="search-info"></span>
+                <label class="archive-search-toggle" title="Include archived tasks in search">
+                    <input type="checkbox" id="search-include-archived" onchange="toggleArchiveSearch(this.checked)">
+                    <span>📦 Archive</span>
+                </label>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="live-indicator live" id="live-indicator">Live</span>
+            <button class="btn btn-secondary" id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">☀️ Claro</button>
+            <button class="btn btn-secondary" onclick="pollForUpdates(); window.location.reload()">↻ Refresh</button>
+
+            <!-- Not Logged In -->
+            <button class="btn btn-github" id="btn-connect" onclick="showAuthModal()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                Connect GitHub
+            </button>
+
+            <!-- Logged In (hidden by default) -->
+            <div class="user-profile" id="user-profile" style="display: none;">
+                <img class="user-avatar" id="user-avatar" src="" alt="Avatar">
+                <span class="user-name" id="user-name"></span>
+                <button class="btn-icon" onclick="showSettingsModal()" title="Settings">⚙️</button>
+                <span class="user-logout" onclick="logout()">Logout</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Unsaved Changes Banner -->
+    <div class="unsaved-banner" id="unsaved-banner">
+        <span class="unsaved-text">⚠️ You have unsaved changes</span>
+        <div>
+            <button class="btn btn-secondary btn-small" onclick="discardChanges()">Discard</button>
+            <button class="btn btn-primary btn-small" onclick="showCommitModal()">Save & Commit</button>
+        </div>
+    </div>
+
+    <!-- TASKS VIEW -->
+    <div id="view-tasks" class="view active">
+
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-value" id="stat-week">0</span>
+            <span class="stat-label">This week</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value" id="stat-progress">0</span>
+            <span class="stat-label">In progress</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value" id="stat-total">0</span>
+            <span class="stat-label">Total</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value stat-highlight" id="stat-completion">0%</span>
+            <span class="stat-label">Completion</span>
+        </div>
+    </div>
+
+    <div class="filters" id="filters">
+        <button class="filter-btn active" data-filter="all">All projects</button>
+    </div>
+
+    <div class="executive-bar" id="executive-bar">
+        <div class="exec-card">
+            <div class="exec-title">Distribución</div>
+            <div class="exec-row"><span>Backlog</span><div class="exec-track"><div class="exec-fill backlog" id="bar-backlog"></div></div><span id="bar-backlog-label">0</span></div>
+            <div class="exec-row"><span>En progreso</span><div class="exec-track"><div class="exec-fill progress" id="bar-progress"></div></div><span id="bar-progress-label">0</span></div>
+            <div class="exec-row"><span>Review</span><div class="exec-track"><div class="exec-fill review" id="bar-review"></div></div><span id="bar-review-label">0</span></div>
+            <div class="exec-row"><span>Done</span><div class="exec-track"><div class="exec-fill done" id="bar-done"></div></div><span id="bar-done-label">0</span></div>
+        </div>
+        <div class="exec-card">
+            <div class="exec-title">Proyectos activos</div>
+            <div id="project-summary" class="project-summary"></div>
+        </div>
+    </div>
+
+    <main class="main">
+        <div class="kanban">
+            <div class="column column-templates">
+                <div class="column-header">
+                    <div class="column-dot templates"></div>
+                    <span class="column-title">📑 Templates</span>
+                    <span class="column-count" id="count-templates">0</span>
+                    <span class="column-add" onclick="openNewTemplate()" title="Add new template">+</span>
+                </div>
+                <div class="column-tasks" id="tasks-templates"></div>
+            </div>
+
+            <div class="column column-recurring">
+                <div class="column-header">
+                    <div class="column-dot recurring"></div>
+                    <span class="column-title">Recurring</span>
+                    <span class="column-count" id="count-recurring">0</span>
+                </div>
+                <div class="column-tasks" id="tasks-recurring" ondragover="handleCronDragOver(event)" ondragleave="handleCronDragLeave(event)" ondrop="handleCronDrop(event)"></div>
+            </div>
+
+            <div class="column column-scheduled">
+                <div class="column-header">
+                    <div class="column-dot scheduled"></div>
+                    <span class="column-title">📅 Scheduled</span>
+                    <span class="column-count" id="count-scheduled">0</span>
+                    <span class="column-add" onclick="openScheduledTaskModal()" title="Schedule a task">+</span>
+                </div>
+                <div class="column-tasks" id="tasks-scheduled" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'scheduled')"></div>
+            </div>
+
+            <div class="column">
+                <div class="column-header">
+                    <div class="column-dot backlog"></div>
+                    <span class="column-title">Backlog</span>
+                    <span class="column-count" id="count-backlog">0</span>
+                    <span class="column-add" onclick="openNewTask('backlog')" title="Add new task">+</span>
+                </div>
+                <div class="column-tasks" id="tasks-backlog" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'backlog')"></div>
+            </div>
+
+            <div class="column column-wide">
+                <div class="column-header">
+                    <div class="column-dot in-progress"></div>
+                    <span class="column-title">In Progress</span>
+                    <span class="column-count" id="count-in_progress">0</span>
+                    <span class="column-add" onclick="openNewTask('in_progress')" title="Add new task">+</span>
+                </div>
+                <div class="column-tasks" id="tasks-in_progress" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'in_progress')"></div>
+            </div>
+
+            <div class="column">
+                <div class="column-header">
+                    <div class="column-dot review"></div>
+                    <span class="column-title">Review</span>
+                    <span class="column-count" id="count-review">0</span>
+                    <span class="column-add" onclick="openNewTask('review')" title="Add new task">+</span>
+                </div>
+                <div class="column-tasks" id="tasks-review" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'review')"></div>
+            </div>
+
+            <div class="column">
+                <div class="column-header">
+                    <div class="column-dot done"></div>
+                    <span class="column-title">Done</span>
+                    <span class="column-count" id="count-done">0</span>
+                    <button class="archive-all-btn" onclick="showArchiveView()" title="View archived tasks" style="background: transparent;">📂 View</button>
+                    <button class="archive-all-btn" onclick="archiveAllDone()" title="Archive all done tasks">📦 Archive All</button>
+                </div>
+                <div class="column-tasks" id="tasks-done" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'done')"></div>
+            </div>
+        </div>
+
+        <aside class="activity" id="activity-sidebar">
+            <div class="activity-header">
+                <span>ACTIVITY</span>
+                <button class="activity-toggle" onclick="toggleActivity()" title="Hide Activity">
+                    <span id="activity-toggle-icon">✕</span>
+                </button>
+            </div>
+            <div class="activity-list" id="activity-list"></div>
+        </aside>
+        <button class="activity-reopen" id="activity-reopen" onclick="toggleActivity()" title="Show Activity">
+            ACTIVITY
+        </button>
+    </main>
+
+    </div><!-- END view-tasks -->
+
+    <!-- SKILLS VIEW -->
+    <div id="view-skills" class="view" style="display: none;">
+        <div class="skills-view">
+            <!-- Skills Header with Stats -->
+            <div class="skills-header">
+                <div class="skills-stats">
+                    <div class="skills-stat">
+                        <span class="skills-stat-value" id="skills-total">0</span>
+                        <span class="skills-stat-label">Total Skills</span>
+                    </div>
+                    <div class="skills-stat">
+                        <span class="skills-stat-value" id="skills-ready">0</span>
+                        <span class="skills-stat-label">Ready</span>
+                    </div>
+                    <div class="skills-stat">
+                        <span class="skills-stat-value" id="skills-needs-setup">0</span>
+                        <span class="skills-stat-label">Needs Setup</span>
+                    </div>
+                </div>
+                <div class="skills-header-actions">
+                    <button class="btn btn-secondary" onclick="refreshSkills()">↻ Refresh</button>
+                    <button class="btn btn-clawdhub" onclick="openClawdHub()">
+                        🧩 Browse ClawdHub
+                    </button>
+                </div>
+            </div>
+
+            <!-- Skills Filter Bar -->
+            <div class="skills-filters">
+                <div class="skills-filter-chips">
+                    <button class="skills-filter-chip active" data-filter="all" onclick="resetSkillFilters()">All</button>
+                    <button class="skills-filter-chip" data-filter="enabled" onclick="toggleSkillFilter('enabled')">✅ Enabled</button>
+                    <button class="skills-filter-chip" data-filter="disabled" onclick="toggleSkillFilter('disabled')">⏸️ Disabled</button>
+                    <button class="skills-filter-chip" data-filter="ready" onclick="toggleSkillFilter('ready')">🟢 Ready</button>
+                    <button class="skills-filter-chip" data-filter="needs-setup" onclick="toggleSkillFilter('needs-setup')">🟡 Needs Setup</button>
+                    <button class="skills-filter-chip" data-filter="builtin" onclick="toggleSkillFilter('builtin')">📦 Built-in</button>
+                    <button class="skills-filter-chip" data-filter="workspace" onclick="toggleSkillFilter('workspace')">🏠 Workspace</button>
+                </div>
+            </div>
+
+            <!-- Skills Grid Container -->
+            <div id="skills-grid-container">
+                <!-- Skills will be rendered here by JavaScript -->
+                <div class="skills-empty">
+                    <div class="skills-empty-icon">🧩</div>
+                    <div class="skills-empty-title">Loading skills...</div>
+                    <div class="skills-empty-text">Please wait while we load your skills.</div>
+                </div>
+            </div>
+        </div>
+    </div><!-- END view-skills -->
+
+    <!-- BRAIN VIEW -->
+    <div id="view-brain" class="view" style="display: none;">
+        <div class="brain-view">
+            <!-- Memory Explorer (Left Panel) -->
+            <div class="brain-explorer">
+                <div class="brain-explorer-header">
+                    <div class="brain-explorer-title">Memory Files</div>
+                    <div class="brain-search">
+                        <span class="brain-search-icon">🔍</span>
+                        <input type="text" id="brain-search-input" placeholder="Search memory..." oninput="handleBrainSearch(this.value)">
+                    </div>
+                </div>
+                
+                <div class="brain-file-tree" id="brain-file-tree">
+                    <!-- Files will be rendered by JavaScript -->
+                    <div class="brain-empty">
+                        <div class="brain-empty-icon">📂</div>
+                        <div class="brain-empty-title">Loading...</div>
+                    </div>
+                </div>
+                
+                <div class="brain-tags">
+                    <div class="brain-tags-title">Tags</div>
+                    <div class="brain-tag-cloud" id="brain-tag-cloud">
+                        <!-- Tags will be rendered by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Editor (Center Panel) -->
+            <div class="brain-editor">
+                <div class="brain-editor-header">
+                    <div class="brain-editor-tabs" id="brain-editor-tabs">
+                        <!-- Tabs will be rendered when files are opened -->
+                        <span style="color: var(--text-secondary); font-size: 0.875rem; padding: 0.5rem;">Select a file to edit</span>
+                    </div>
+                    <div class="brain-editor-actions">
+                        <button class="btn btn-secondary btn-small" onclick="toggleBrainPreview()" id="brain-preview-toggle" disabled>
+                            👁️ Preview
+                        </button>
+                        <button class="btn btn-secondary btn-small" onclick="openMemoryMerge()">
+                            🔄 Merge Notes
+                        </button>
+                        <button class="btn btn-primary btn-small" onclick="openKnowledgeBuilder()">
+                            🧙 Add Knowledge
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="brain-editor-toolbar" id="brain-editor-toolbar" style="display: none;">
+                    <button class="brain-toolbar-btn" onclick="brainInsert('**', '**')" title="Bold">𝐁</button>
+                    <button class="brain-toolbar-btn" onclick="brainInsert('*', '*')" title="Italic">𝐼</button>
+                    <button class="brain-toolbar-btn" onclick="brainInsert('`', '`')" title="Code">&lt;/&gt;</button>
+                    <button class="brain-toolbar-btn" onclick="brainInsert('[', '](url)')" title="Link">🔗</button>
+                    <div class="brain-toolbar-divider"></div>
+                    <button class="brain-toolbar-btn" onclick="brainInsertLine('- ')" title="List">• List</button>
+                    <button class="brain-toolbar-btn" onclick="brainInsertLine('## ')" title="Heading">H2</button>
+                    <button class="brain-toolbar-btn" onclick="brainInsertLine('#')" title="Tag">#tag</button>
+                    <div class="brain-toolbar-divider"></div>
+                    <button class="brain-toolbar-btn" onclick="brainInsertLine('---')" title="Divider">―</button>
+                </div>
+                
+                <div class="brain-editor-content" id="brain-editor-content">
+                    <div class="brain-empty">
+                        <div class="brain-empty-icon">🧠</div>
+                        <div class="brain-empty-title">Your Memory, Organized</div>
+                        <div class="brain-empty-text">
+                            Select a file from the explorer to view and edit, or use the Knowledge Builder to add new information.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="brain-editor-footer" id="brain-editor-footer" style="display: none;">
+                    <div class="brain-footer-left">
+                        <span id="brain-cursor-pos">Ln 1, Col 1</span>
+                        <span id="brain-word-count">0 words</span>
+                        <span id="brain-tag-count">0 tags</span>
+                    </div>
+                    <div class="brain-footer-right">
+                        <span id="brain-save-status">Saved</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Changelog (Right Panel) -->
+            <div class="brain-changelog" id="brain-changelog">
+                <div class="brain-changelog-header">
+                    <span class="brain-changelog-title">📜 Changelog</span>
+                    <button class="brain-changelog-toggle" onclick="toggleBrainChangelog()" title="Collapse">
+                        ✕
+                    </button>
+                </div>
+                <div class="brain-changelog-list" id="brain-changelog-list">
+                    <!-- Changelog items will be rendered by JavaScript -->
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📜</div>
+                        <div>Loading history...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- END view-brain -->
+
+    <!-- Knowledge Builder Modal -->
+    <div class="brain-knowledge-builder" id="brain-knowledge-builder">
+        <div class="brain-kb-modal">
+            <div class="brain-kb-header">
+                <span class="brain-kb-title">🧙 Knowledge Builder</span>
+                <button class="brain-kb-close" onclick="closeKnowledgeBuilder()">×</button>
+            </div>
+            <div class="brain-kb-content">
+                <label style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block;">
+                    Paste or type any information you want to remember:
+                </label>
+                <textarea class="brain-kb-input" id="brain-kb-input" placeholder="e.g., JetBrains account uses thomas@example.com, password in 1Password. Renewal date is March 15th."></textarea>
+                
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                    <button class="btn btn-secondary btn-small" onclick="processKnowledge('format')">📝 Format</button>
+                    <button class="btn btn-secondary btn-small" onclick="processKnowledge('extract')">🔍 Extract Facts</button>
+                    <button class="btn btn-secondary btn-small" onclick="processKnowledge('tags')">🏷️ Tags</button>
+                    <div style="width: 1px; height: 20px; background: var(--border); margin: 0 0.25rem;"></div>
+                    <button class="btn btn-primary btn-small" onclick="processKnowledge('ai')" id="brain-kb-ai-btn" title="Process with AI (requires API key)">🤖 AI Process</button>
+                    <button class="btn btn-secondary btn-small" onclick="showAISettings()" title="Configure AI">⚙️</button>
+                </div>
+                
+                <div class="brain-kb-result" id="brain-kb-result" style="display: none;">
+                    <div class="brain-kb-result-label">Result</div>
+                    <div id="brain-kb-result-content"></div>
+                </div>
+                
+                <div style="margin-top: 1rem;">
+                    <label style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block;">
+                        Save to:
+                    </label>
+                    <select id="brain-kb-target" style="width: 100%; padding: 0.5rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);">
+                        <option value="today">📅 Today's memory (memory/YYYY-MM-DD.md)</option>
+                        <option value="memory">🧠 Long-term memory (MEMORY.md)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="brain-kb-footer">
+                <button class="btn btn-secondary" onclick="closeKnowledgeBuilder()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveKnowledge()" id="brain-kb-save" disabled>Save to Memory</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Settings Modal -->
+    <div class="brain-ai-settings" id="brain-ai-settings">
+        <div class="brain-ai-settings-modal">
+            <div class="brain-ai-settings-header">
+                <span class="brain-ai-settings-title">⚙️ AI Settings</span>
+                <button class="brain-kb-close" onclick="hideAISettings()">×</button>
+            </div>
+            <div class="brain-ai-settings-content">
+                <div class="brain-ai-status" id="brain-ai-status">
+                    <span>🔌</span>
+                    <span id="brain-ai-status-text">Checking...</span>
+                </div>
+                
+                <div class="brain-ai-settings-field">
+                    <label for="brain-ai-provider">AI Provider</label>
+                    <select id="brain-ai-provider" onchange="updateAIProviderUI()">
+                        <option value="openrouter">OpenRouter (recommended)</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="local">Local only (no API)</option>
+                    </select>
+                </div>
+                
+                <div class="brain-ai-settings-field" id="brain-ai-key-field">
+                    <label for="brain-ai-key">API Key</label>
+                    <input type="password" id="brain-ai-key" placeholder="openai-key-example">
+                    <div class="brain-ai-settings-hint">
+                        Get your key from <a href="https://openrouter.ai/keys" target="_blank" style="color: var(--accent-blue);">openrouter.ai/keys</a>
+                    </div>
+                </div>
+                
+                <div class="brain-ai-settings-field" id="brain-ai-model-field">
+                    <label for="brain-ai-model">Model</label>
+                    <select id="brain-ai-model">
+                        <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (fast)</option>
+                        <option value="anthropic/claude-3-opus">Claude 3 Opus (best)</option>
+                        <option value="openai/gpt-4o">GPT-4o</option>
+                        <option value="openai/gpt-4o-mini">GPT-4o Mini (cheap)</option>
+                        <option value="google/gemini-pro-1.5">Gemini 1.5 Pro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="brain-ai-settings-footer">
+                <button class="btn btn-secondary" onclick="hideAISettings()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAISettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diff View Modal -->
+    <div class="brain-diff-modal" id="brain-diff-modal">
+        <div class="brain-diff-container">
+            <div class="brain-diff-header">
+                <div>
+                    <div class="brain-diff-title" id="brain-diff-title">Commit Details</div>
+                    <div class="brain-diff-meta" id="brain-diff-meta"></div>
+                </div>
+                <button class="brain-diff-close" onclick="closeDiffModal()">×</button>
+            </div>
+            <div class="brain-diff-content" id="brain-diff-content">
+                <div class="brain-diff-loading">Loading diff...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory Merge Modal -->
+    <div class="brain-merge-modal" id="brain-merge-modal">
+        <div class="brain-merge-container">
+            <div class="brain-merge-header">
+                <span class="brain-merge-title">🔄 Merge Daily Notes to Long-Term Memory</span>
+                <button class="brain-kb-close" onclick="closeMemoryMerge()">×</button>
+            </div>
+            <div class="brain-merge-content">
+                <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">
+                    Select daily notes to consolidate into MEMORY.md. AI will summarize and deduplicate the content.
+                </p>
+                
+                <div class="brain-merge-files" id="brain-merge-files">
+                    <!-- File checkboxes will be rendered here -->
+                </div>
+                
+                <div class="brain-merge-options">
+                    <label class="brain-merge-checkbox">
+                        <input type="checkbox" id="brain-merge-archive" checked>
+                        <span>Archive merged files (add .merged suffix)</span>
+                    </label>
+                    <label class="brain-merge-checkbox">
+                        <input type="checkbox" id="brain-merge-ai" checked>
+                        <span>Use AI for smart summarization</span>
+                    </label>
+                </div>
+                
+                <div class="brain-merge-preview" id="brain-merge-preview" style="display: none;">
+                    <div class="brain-merge-preview-label">Preview</div>
+                    <div class="brain-merge-preview-content" id="brain-merge-preview-content"></div>
+                </div>
+            </div>
+            <div class="brain-merge-footer">
+                <button class="btn btn-secondary" onclick="closeMemoryMerge()">Cancel</button>
+                <button class="btn btn-secondary" onclick="previewMerge()" id="brain-merge-preview-btn">👁️ Preview</button>
+                <button class="btn btn-primary" onclick="executeMerge()" id="brain-merge-execute" disabled>Merge Selected</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skill Detail Panel (Slide-in) -->
+    <div class="skill-panel-overlay" id="skill-panel-overlay" onclick="closeSkillPanel()"></div>
+    <div class="skill-panel" id="skill-panel">
+        <div class="skill-panel-header">
+            <div class="skill-panel-title">
+                <span class="skill-panel-title-emoji" id="skill-panel-emoji">🧩</span>
+                <span class="skill-panel-title-text" id="skill-panel-name">Skill Name</span>
+            </div>
+            <button class="skill-panel-close" onclick="closeSkillPanel()" title="Close (Esc)">×</button>
+        </div>
+        <div class="skill-panel-content" id="skill-panel-content">
+            <!-- Content will be rendered by JavaScript -->
+        </div>
+        <div class="skill-panel-footer" id="skill-panel-footer">
+            <button class="btn btn-secondary" onclick="closeSkillPanel()">Close</button>
+            <button class="btn btn-primary" id="skill-panel-save" onclick="saveSkillFromPanel()">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- DOCS VIEW -->
+    <div id="view-docs" class="view" style="display: none;">
+        <div class="docs-container" style="max-width: 900px; margin: 0 auto; padding: 2rem;">
+            <h1 style="margin-bottom: 1.5rem;">📚 Mission Control Documentation</h1>
+
+            <div class="docs-section" style="margin-bottom: 2rem; background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--accent);">
+                <h2 style="color: var(--accent); margin-bottom: 0.5rem;">📌 Demo Mode</h2>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    You're currently viewing <strong>sample data</strong>. To manage your own tasks, click <strong>"Connect GitHub"</strong> in the top right corner to link your repository.
+                </p>
+            </div>
+
+            <div class="docs-section" style="margin-bottom: 2rem;">
+                <h2 style="color: var(--accent); margin-bottom: 1rem;">🚀 Getting Started</h2>
+
+                <h3 style="margin: 1rem 0 0.5rem;">Installation</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    Add Mission Control to your existing MoltBot workspace:
+                </p>
+                <ol style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem;">
+                    <li><strong>Fork</strong> this repository to your GitHub account</li>
+                    <li><strong>Copy dashboard files</strong> to your workspace: <code>index.html</code>, <code>data/</code>, <code>canvas/</code>, <code>scripts/</code>, <code>.github/</code></li>
+                    <li>Enable <strong>GitHub Pages</strong> in your repo settings (Settings → Pages → Branch: main)</li>
+                    <li>Visit <code>https://[username].github.io/mission-control/</code></li>
+                </ol>
+
+                <h3 style="margin: 1.5rem 0 0.5rem;">Connect to GitHub</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    Click <strong>"Connect GitHub"</strong> in the top right corner. You'll need a GitHub Personal Access Token with <code>repo</code> permissions.
+                </p>
+                <ol style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem;">
+                    <li>Go to <a href="https://github.com/settings/tokens" target="_blank" style="color: var(--accent);">GitHub Settings → Tokens</a></li>
+                    <li>Click "Generate new token (classic)"</li>
+                    <li>Select scope: <code>repo</code> (Full control of private repositories)</li>
+                    <li>Copy the token and paste it in Mission Control</li>
+                </ol>
+
+                <h3 style="margin: 1.5rem 0 0.5rem;">Understanding the Board</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    Mission Control uses a Kanban-style board with these columns:
+                </p>
+                <ul style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem;">
+                    <li><strong>🔄 Recurring</strong> - Cron jobs that run on schedule</li>
+                    <li><strong>📅 Scheduled</strong> - One-time tasks with a future date</li>
+                    <li><strong>📑 Templates</strong> - Reusable task templates</li>
+                    <li><strong>📋 Backlog</strong> - Tasks waiting to be started</li>
+                    <li><strong>🚀 In Progress</strong> - Currently being worked on</li>
+                    <li><strong>👀 Review</strong> - Done, awaiting approval</li>
+                    <li><strong>✅ Done</strong> - Completed tasks</li>
+                </ul>
+            </div>
+
+            <div class="docs-section" style="margin-bottom: 2rem;">
+                <h2 style="color: var(--accent); margin-bottom: 1rem;">✨ Features</h2>
+
+                <h3 style="margin: 1rem 0 0.5rem;">Auto-Save</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    All changes are <strong>automatically saved</strong> to GitHub. No manual "Save" button needed!
+                </p>
+                <ul style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem;">
+                    <li>Drag &amp; drop tasks between columns → instant save</li>
+                    <li>Edit task details → instant save</li>
+                    <li>Add/remove subtasks → instant save</li>
+                    <li>Add comments → instant save</li>
+                </ul>
+
+                <h3 style="margin: 1.5rem 0 0.5rem;">Drag &amp; Drop</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    Click and drag any task card to move it between columns. The status updates automatically.
+                </p>
+
+                <h3 style="margin: 1.5rem 0 0.5rem;">Subtasks</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    Break down tasks into smaller steps. Click on a subtask to edit it inline.
+                </p>
+
+                <h3 style="margin: 1.5rem 0 0.5rem;">Comments</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    Add comments to tasks for context or feedback. Comments on <strong>Review</strong> tasks trigger notifications to MoltBot.
+                </p>
+
+                <h3 style="margin: 1.5rem 0 0.5rem;">Projects &amp; Tags</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    Organize tasks by project. Use the ⚙️ Settings to add new projects. Filter tasks using the project buttons.
+                </p>
+            </div>
+
+            <div class="docs-section" style="margin-bottom: 2rem;">
+                <h2 style="color: var(--accent); margin-bottom: 1rem;">🤖 MoltBot Integration</h2>
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    Mission Control is connected to MoltBot via webhooks. When you make changes:
+                </p>
+                <ul style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem;">
+                    <li><strong>Move task to "In Progress"</strong> → MoltBot receives a work order and starts processing</li>
+                    <li><strong>Add comment on Review task</strong> → MoltBot sees your feedback</li>
+                    <li><strong>MoltBot completes work</strong> → Task moves to "Review" automatically</li>
+                </ul>
+
+                <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                    <strong>💡 Pro Tip:</strong> Write clear task descriptions and subtasks. The more detail you provide, the better MoltBot can execute the task.
+                </div>
+            </div>
+
+            <div class="docs-section" style="margin-bottom: 2rem;">
+                <h2 style="color: var(--accent); margin-bottom: 1rem;">⌨️ Keyboard Shortcuts</h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.5rem; color: var(--text-secondary);"><code>Cmd/Ctrl + Shift + R</code></td>
+                        <td style="padding: 0.5rem;">Hard refresh (clear cache)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.5rem; color: var(--text-secondary);"><code>Escape</code></td>
+                        <td style="padding: 0.5rem;">Close modals</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.5rem; color: var(--text-secondary);"><code>Enter</code></td>
+                        <td style="padding: 0.5rem;">Save inline edits</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="docs-section">
+                <h2 style="color: var(--accent); margin-bottom: 1rem;">❓ FAQ</h2>
+
+                <details style="margin-bottom: 1rem;">
+                    <summary style="cursor: pointer; font-weight: 500;">Why don't I see my changes?</summary>
+                    <p style="color: var(--text-secondary); padding: 0.5rem 0 0 1rem;">
+                        GitHub Pages can cache content. Try a hard refresh (Cmd+Shift+R) or open in an incognito window.
+                    </p>
+                </details>
+
+                <details style="margin-bottom: 1rem;">
+                    <summary style="cursor: pointer; font-weight: 500;">How do I create a new project?</summary>
+                    <p style="color: var(--text-secondary); padding: 0.5rem 0 0 1rem;">
+                        Click the ⚙️ Settings button (when logged in) → Add a new project with ID, name, icon, and color.
+                    </p>
+                </details>
+
+                <details style="margin-bottom: 1rem;">
+                    <summary style="cursor: pointer; font-weight: 500;">Can multiple people use this?</summary>
+                    <p style="color: var(--text-secondary); padding: 0.5rem 0 0 1rem;">
+                        Yes! Anyone with repo access can connect their GitHub token. Changes from all users sync automatically.
+                    </p>
+                </details>
+            </div>
+        </div>
+    </div><!-- END view-docs -->
+
+    <!-- PEOPLE VIEW -->
+    <div id="view-people" class="view" style="display: none;">
+        <div class="people-container">
+            <div class="people-header">
+                <h1>👥 Team</h1>
+                <div class="people-stats" id="people-stats">
+                    <!-- Stats filled by JS -->
+                </div>
+            </div>
+            <div id="collaborators-container">
+                <div class="people-loading">
+                    <div class="spinner"></div>
+                    <p>Loading collaborators...</p>
+                </div>
+            </div>
+        </div>
+    </div><!-- END view-people -->
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="auth-modal" onclick="if(event.target===this)hideAuthModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">🔐 Connect to GitHub</h2>
+                <button class="modal-close" onclick="hideAuthModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    Connect your GitHub account to create, edit, and save tasks directly to the repository.
+                </p>
+
+                <div class="steps">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <div class="step-content">
+                            <div class="step-title">Create a Personal Access Token</div>
+                            <div class="step-description">
+                                <a href="https://github.com/settings/tokens/new?scopes=repo&description=Mission%20Control%20Dashboard" target="_blank">
+                                    Click here to create a token →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <div class="step-content">
+                            <div class="step-title">Select "repo" scope</div>
+                            <div class="step-description">This allows read/write access to repositories</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <div class="step-content">
+                            <div class="step-title">Paste your token below</div>
+                            <div class="step-description">The token starts with "ghp_"</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">GitHub Personal Access Token</label>
+                    <input type="password" class="form-input" id="token-input" placeholder="github_pat_example_token" autocomplete="off">
+                    <div class="form-hint">
+                        🔒 Your token is stored locally and never sent anywhere except GitHub.
+                    </div>
+                    <div class="validation-loading" id="validation-loading">
+                        <div class="spinner"></div>
+                        <span>Validating token...</span>
+                    </div>
+                    <div class="validation-success" id="validation-success">
+                        <span>✓</span>
+                        <span>Connected as <strong id="validated-user"></strong></span>
+                    </div>
+                    <div class="validation-error" id="validation-error">
+                        <span>✗</span>
+                        <span id="error-message">Invalid token</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideAuthModal()">Cancel</button>
+                <button class="btn btn-primary" id="btn-save-token" onclick="validateAndSaveToken()" disabled>Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)hideSettingsModal()">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">⚙️ Settings</h2>
+                <button class="modal-close" onclick="hideSettingsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3 style="margin-bottom: 12px; font-size: 1rem;">Gateway Connection</h3>
+                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">Connect to your OpenClaw Gateway for Run History and real-time sync.</p>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" class="form-input" id="gateway-url-input" placeholder="http://localhost:18789" style="flex: 1;">
+                        <button class="btn btn-primary" onclick="saveGatewayUrl()">Connect</button>
+                    </div>
+                    <div id="gateway-status" style="font-size: 0.8rem; margin-top: 6px; color: var(--text-secondary);"></div>
+                    <div style="margin-top: 10px;">
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">Gateway Token (from gateway.auth.token in openclaw.json)</p>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="password" class="form-input" id="gateway-token-input" placeholder="Gateway Auth Token" style="flex: 1;">
+                            <button class="btn btn-secondary" onclick="toggleGatewayTokenVisibility()" title="Show/Hide">👁️</button>
+                            <button class="btn btn-primary" onclick="saveGatewayToken()">Save</button>
+                        </div>
+                        <div id="gateway-token-status" style="font-size: 0.8rem; margin-top: 6px; color: var(--text-secondary);"></div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 12px; font-size: 1rem;">💭 Live Thinking</h3>
+                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">Enable real-time thinking visibility during task processing. Requires Gateway Hooks Token.</p>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="password" class="form-input" id="hooks-token-input" placeholder="Hooks Token (from openclaw.json)" style="flex: 1;">
+                        <button class="btn btn-secondary" onclick="toggleHooksTokenVisibility()" title="Show/Hide">👁️</button>
+                        <button class="btn btn-primary" onclick="saveHooksToken()">Save</button>
+                    </div>
+                    <div id="hooks-token-status" style="font-size: 0.8rem; margin-top: 6px; color: var(--text-secondary);"></div>
+                </div>
+                
+                <h3 style="margin-bottom: 12px; font-size: 1rem;">Projects</h3>
+                <div id="projects-list" class="projects-list"></div>
+
+                <div class="add-project-form" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                    <h4 style="margin-bottom: 8px; font-size: 0.9rem;" id="project-form-title">Add New Project</h4>
+                    <div style="display: grid; gap: 8px;">
+                        <input type="text" class="form-input" id="new-project-id" placeholder="ID (z.B. marketing)">
+                        <input type="text" class="form-input" id="new-project-name" placeholder="Name (z.B. Marketing)">
+                        <div style="margin-bottom: 8px;">
+                            <label style="font-size: 0.8rem; color: var(--text-secondary);">Icon</label>
+                            <div class="emoji-picker" style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('📁')">📁</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('📊')">📊</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('💼')">💼</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('🚀')">🚀</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('💡')">💡</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('🎯')">🎯</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('📣')">📣</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('🛠️')">🛠️</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('📱')">📱</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('🌐')">🌐</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('💰')">💰</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('📝')">📝</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('🏠')">🏠</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('❤️')">❤️</button>
+                                <button type="button" class="emoji-btn" onclick="selectEmoji('⭐')">⭐</button>
+                                <input type="text" class="form-input" id="new-project-icon" placeholder="or custom..." style="width: 100px; font-size: 1.1rem;">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <label style="font-size: 0.8rem; color: var(--text-secondary);">Farbe:</label>
+                            <input type="color" id="new-project-color" value="#6366f1" style="width: 50px; height: 32px; border: none; cursor: pointer; border-radius: 4px;">
+                            <button class="btn btn-secondary" id="btn-cancel-project" onclick="cancelEditProject()" style="display: none;">Cancel</button>
+                            <button class="btn btn-primary" id="btn-save-project" onclick="saveProject()" style="flex: 1;">+ Add Project</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commit Modal -->
+    <div class="modal-overlay" id="commit-modal" onclick="if(event.target===this)hideCommitModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">💾 Save Changes to GitHub</h2>
+                <button class="modal-close" onclick="hideCommitModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Commit Message</label>
+                    <input type="text" class="form-input" id="commit-message" placeholder="Update tasks" autocomplete="off">
+                    <div class="form-hint">
+                        Describe what you changed (optional - will use default if empty)
+                    </div>
+                </div>
+                <div id="changes-summary" style="margin-top: 1rem; padding: 1rem; background: var(--bg-card); border-radius: 6px; font-size: 0.875rem;">
+                    <!-- Changes will be listed here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideCommitModal()">Cancel</button>
+                <button class="btn btn-primary" id="btn-commit" onclick="commitChanges()">
+                    <span id="commit-btn-text">Commit &amp; Push</span>
+                    <div class="spinner" id="commit-spinner" style="display: none;"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Edit Modal -->
+    <div class="modal-overlay" id="task-modal" onclick="if(event.target===this)hideTaskModal()">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="task-modal-title">Edit Task</h2>
+                <button class="modal-close" onclick="hideTaskModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" class="form-input" id="task-title" placeholder="Task title">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" id="task-description" rows="3" placeholder="Task description" style="resize: vertical;"></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-input" id="task-status">
+                            <option value="scheduled">Scheduled</option>
+                            <option value="backlog">Backlog</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="review">Review</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select class="form-input" id="task-priority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Project</label>
+                    <select class="form-input" id="task-project">
+                        <!-- Populated dynamically from STATE.data.projects -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tags</label>
+                    <div id="tags-chips" class="tags-chips-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;"></div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="form-input" id="new-tag-input" placeholder="Add tag..." style="flex: 1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag();}">
+                        <button class="btn btn-secondary btn-small" onclick="addTag()">+ Add</button>
+                    </div>
+                    <input type="hidden" id="task-tags">
+                </div>
+
+                <!-- Subtasks Section -->
+                <div class="form-group" id="subtasks-section">
+                    <label class="form-label">Subtasks</label>
+                    <div class="subtasks-list" id="subtasks-list"></div>
+                    <div class="subtask-add">
+                        <input type="text" class="form-input" id="new-subtask-input" placeholder="Add new subtask...">
+                        <button class="btn btn-secondary btn-small" onclick="addSubtask()">+ Add</button>
+                    </div>
+                </div>
+
+                <!-- Comments Section -->
+                <div class="form-group" id="comments-section">
+                    <label class="form-label">Comments</label>
+                    <div class="comments-list" id="comments-list"></div>
+                    <div class="comment-add">
+                        <textarea class="form-input" id="new-comment-input" rows="2" placeholder="Add a comment..."></textarea>
+                        <button class="btn btn-secondary btn-small" onclick="addComment()">Post Comment</button>
+                    </div>
+                </div>
+                
+                <!-- Learnings Section (visible only in review status) -->
+                <div class="form-group" id="learnings-section" style="display: none;">
+                    <label class="form-label">
+                        🧠 Learnings from this Task
+                        <span class="learnings-hint">(Accept learnings to save to Memory)</span>
+                    </label>
+                    <div class="learnings-list" id="learnings-list">
+                        <!-- Learnings will be rendered here -->
+                    </div>
+                    <div class="learnings-actions">
+                        <button class="btn btn-secondary btn-small" onclick="extractLearnings()">🔍 Extract from Comments</button>
+                        <button class="btn btn-secondary btn-small" onclick="addManualLearning()">+ Add Learning</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="btn-delete-task" onclick="deleteTask()" style="margin-right: auto;">Delete</button>
+                <button class="btn btn-secondary" id="btn-task-to-cron" onclick="openTaskToCronWizard(currentEditingTaskId)" title="Convert to recurring cron job">⏰ As Cron</button>
+                <button class="btn btn-secondary" onclick="hideTaskModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTask()">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="scripts/app.js" defer></script>
+
+    </div><!-- End Dashboard -->
+
+    <script src="scripts/auth.js" defer></script>
+</body>
+</html>
+<!-- test Wed Jan 28 19:46:49 CET 2026 -->
+<!-- webhook test 19:54:54 -->
+<!-- test 19:55:37 -->
+<!-- final test 19:56:16 -->
+<!-- ctx debug 19:56:50 -->
+<!-- real push test 20:18:59 -->
+<!-- FINAL TEST 20:20:41 -->
