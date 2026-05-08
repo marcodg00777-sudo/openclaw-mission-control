@@ -20,3 +20,6 @@
             branch: 'main',
             tasksFile: 'data/tasks.json'
         };
+
+        // === STATE ===
+        var STATE = {
