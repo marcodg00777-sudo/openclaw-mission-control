@@ -1,4 +1,33 @@
 // === LOGIN/AUTH GATE ===
+        async function validateGitHubToken(token) {
+            const authHeaders = [
+                { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
+                { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github+json' }
+            ];
+
+            let lastError = null;
+            for (const headers of authHeaders) {
+                try {
+                    const response = await fetch('https://api.github.com/user', {
+                        headers,
+                        mode: 'cors',
+                        cache: 'no-store'
+                    });
+
+                    if (response.ok) {
+                        return { ok: true, user: await response.json() };
+                    }
+
+                    const body = await response.text().catch(() => '');
+                    lastError = `GitHub ${response.status}${body ? `: ${body.slice(0, 180)}` : ''}`;
+                } catch (e) {
+                    lastError = e?.message || String(e);
+                }
+            }
+
+            return { ok: false, error: lastError || 'Unknown validation error' };
+        }
+
         async function checkAuth() {
             // Check both old and new token keys, migrate if needed
             let token = localStorage.getItem('gh_token');
@@ -19,16 +48,12 @@
                 return;
             }
 
-            // Validate token
             try {
-                const response = await fetch('https://api.github.com/user', {
-                    headers: { 'Authorization': `token ${token}` }
-                });
+                const result = await validateGitHubToken(token);
 
-                if (response.ok) {
-                    const user = await response.json();
+                if (result.ok) {
                     STATE.token = token;
-                    STATE.user = user;
+                    STATE.user = result.user;
                     showDashboard();
                     await loadTasksFromGitHub();
                     if (!(await loadCronsFromGateway())) await loadCronsFromGitHub(); // Load data after auth
@@ -43,6 +68,7 @@
                         });
                     }
                 } else {
+                    console.error('Auth check failed:', result.error);
                     localStorage.removeItem('gh_token');
                     showLoginScreen();
                 }
@@ -83,30 +109,26 @@
                 return;
             }
 
-            // Show loading
             errorDiv.style.display = 'none';
             loadingDiv.style.display = 'flex';
             btn.disabled = true;
 
             try {
-                const response = await fetch('https://api.github.com/user', {
-                    headers: { 'Authorization': `token ${token}` }
-                });
+                const result = await validateGitHubToken(token);
 
-                if (response.ok) {
-                    const user = await response.json();
+                if (result.ok) {
                     localStorage.setItem('gh_token', token);
                     STATE.token = token;
-                    STATE.user = user;
+                    STATE.user = result.user;
                     showDashboard();
                     await loadTasksFromGitHub();
                     if (!(await loadCronsFromGateway())) await loadCronsFromGitHub();
                 } else {
-                    errorDiv.textContent = 'Invalid token. Please check and try again.';
+                    errorDiv.textContent = `Login failed: ${result.error}`;
                     errorDiv.style.display = 'block';
                 }
             } catch (e) {
-                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.textContent = `Connection error: ${e?.message || e}`;
                 errorDiv.style.display = 'block';
             } finally {
                 loadingDiv.style.display = 'none';
