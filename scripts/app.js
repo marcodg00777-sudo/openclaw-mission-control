@@ -486,8 +486,10 @@
             STATE.isSaving = true;
             
             try {
-                // CONFLICT DETECTION: Check if remote has newer version
-                if (!forceOverwrite) {
+                // CONFLICT DETECTION: skip the extra GET when a poll just confirmed the SHA;
+                // a stale SHA still makes the PUT fail with 409, which is handled below.
+                const stalePoll = (Date.now() - lastPollTime) > 60000;
+                if (!forceOverwrite && stalePoll) {
                     const checkResponse = await fetch(
                         `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.tasksFile}`,
                         {
@@ -562,10 +564,13 @@
                 STATE.fileSha = result.content.sha;
                 STATE.originalData = JSON.parse(JSON.stringify(STATE.data));
                 STATE.hasUnsavedChanges = false;
+                lastDataHash = hashData(STATE.data);
+                lastPollEtag = null;
                 document.getElementById('unsaved-banner').classList.remove('visible');
 
                 showToast('success', '✓ Saved to GitHub!');
                 STATE.isSaving = false;
+                triggerPostSavePoll();
                 return true;
 
             } catch (error) {
@@ -6191,11 +6196,32 @@ ${learning.tags.map(t => `#${t}`).join(' ')}
         const POLL_INTERVAL_NORMAL = 30000; // 30 seconds when idle
         const POLL_INTERVAL_ACTIVE = 10000; // 10 seconds when tasks are in progress
         let pollIntervalId = null;
-        
+        let lastPollEtag = null;
+        let lastUserActionTime = 0;
+
+        function recordUserAction() { lastUserActionTime = Date.now(); }
+        ['pointerdown', 'keydown'].forEach(evt =>
+            document.addEventListener(evt, recordUserAction, { passive: true, capture: true }));
+
         function getPollInterval() {
-            // Faster polling when there are in-progress tasks
+            // Faster polling while tasks are in progress or the user interacted in the last 2 minutes
             const hasInProgress = STATE.data?.tasks?.some(t => t.status === 'in_progress');
-            return hasInProgress ? POLL_INTERVAL_ACTIVE : POLL_INTERVAL_NORMAL;
+            const recentAction = (Date.now() - lastUserActionTime) < 120000;
+            return (hasInProgress || recentAction) ? POLL_INTERVAL_ACTIVE : POLL_INTERVAL_NORMAL;
+        }
+
+        function triggerPostSavePoll() {
+            const delays = [5000, 10000, 20000, 40000];
+            let idx = 0;
+            function scheduleNext() {
+                if (idx >= delays.length) return;
+                setTimeout(async () => {
+                    await pollForUpdates();
+                    idx++;
+                    scheduleNext();
+                }, delays[idx]);
+            }
+            scheduleNext();
         }
 
         function hashData(data) {
@@ -6213,12 +6239,19 @@ ${learning.tags.map(t => `#${t}`).join(' ')}
                         headers: {
                             'Authorization': `token ${STATE.token}`,
                             'Accept': 'application/vnd.github.v3+json',
-                            'If-None-Match': ''  // Bypass cache
-                        }
+                            'If-None-Match': lastPollEtag || ''
+                        },
+                        cache: 'no-store'
                     }
                 );
 
+                if (response.status === 304) {
+                    lastPollTime = Date.now();
+                    updateLiveIndicator();
+                    return;
+                }
                 if (!response.ok) return;
+                lastPollEtag = response.headers.get('ETag');
 
                 const fileData = await response.json();
                 const bytes = Uint8Array.from(atob(fileData.content), c => c.charCodeAt(0));
@@ -6265,7 +6298,7 @@ ${learning.tags.map(t => `#${t}`).join(' ')}
             }, interval);
         }
         startDynamicPolling();
-        setInterval(updateLiveIndicator, 1000);
+        setInterval(() => { if (!document.hidden) updateLiveIndicator(); }, 1000);
 
         // === TEMPLATES FUNCTIONS ===
         function renderTemplates() {
@@ -6711,17 +6744,17 @@ ${learning.tags.map(t => `#${t}`).join(' ')}
         
         // Update scheduled task countdowns every 30 seconds
         setInterval(() => {
-            if (STATE.data) renderScheduledTasks();
+            if (STATE.data && !document.hidden) renderScheduledTasks();
         }, 30000);
         
         // Update processing time displays every 30 seconds
         setInterval(() => {
-            updateProcessingTimes();
+            if (!document.hidden) updateProcessingTimes();
         }, 30000);
         
         // Update activity logs for in_progress tasks every 15 seconds
         setInterval(() => {
-            updateActivityLogs();
+            if (!document.hidden) updateActivityLogs();
         }, 15000);
         
         function updateActivityLogs() {
@@ -8554,6 +8587,9 @@ ${learning.tags.map(t => `#${t}`).join(' ')}
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && STATE.token) {
                 pollForUpdates();
+                updateLiveIndicator();
+                updateProcessingTimes();
+                if (STATE.data) renderScheduledTasks();
             }
         });
 
