@@ -2,7 +2,6 @@
         if (typeof globalThis.STATE === 'undefined') {
             globalThis.STATE = {};
         }
-        const STATE = globalThis.STATE;
 
         async function validateGitHubToken(token) {
             const authHeaders = [
