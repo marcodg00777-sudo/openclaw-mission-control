@@ -5,6 +5,29 @@ All notable changes to Mission Control will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-09-29
+
+### Added
+
+- **Real dark mode** — light surfaces moved to CSS variables with a full dark palette; the theme follows the OS setting until the user picks one, and is applied before first paint (no light flash)
+- **Owner badge** in the header and a **pulsing Live indicator** (disabled under `prefers-reduced-motion`)
+- **Conditional polling with ETag** — unchanged `tasks.json` returns 304: no download, no API rate-limit cost
+- **Adaptive polling** — 10s while tasks are in progress or the user interacted in the last 2 minutes, 30s otherwise
+- **Post-save burst polling** (5s → 10s → 20s → 40s) to pick up agent updates right after a change
+
+### Changed
+
+- **Inline JS extracted** to `scripts/app.js` and `scripts/auth.js` — `index.html` went from ~459 KB to ~61 KB and scripts cache independently
+- **Save skips the extra conflict-check GET** when a poll ran in the last 60s (a stale SHA still fails the PUT with 409, which is handled)
+- **UI-only timers pause while the tab is hidden** and refresh on return
+
+### Fixed
+
+- **Login "Connection error"** — `scripts/app.js` had been truncated to its first lines, so dashboard loaders were undefined after a valid token check
+- **Duplicate `STATE` declaration** in `auth.js` that would throw once `app.js` declares the global
+- **Unstyled panels** — Activity sidebar, Brain Knowledge Builder/diff/merge modals and the Skills panel rendered below the board after the visual regeneration; styles restored and Activity placed beside the board
+- **Redundant re-render and "Dashboard updated" toast** after the user's own save
+
 ## [2.3.1] - 2026-02-20
 
 ### Fixed
