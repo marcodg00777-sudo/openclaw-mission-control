@@ -8535,16 +8535,21 @@ ${learning.tags.map(t => `#${t}`).join(' ')}
 
         // === INIT ===
         const THEME_KEY = 'mc_theme';
-        function applyTheme(theme) {
+        const systemDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        function systemTheme() { return systemDarkQuery.matches ? 'dark' : 'light'; }
+        function applyTheme(theme, persist = true) {
             document.documentElement.setAttribute('data-theme', theme);
             const btn = document.getElementById('theme-toggle');
             if (btn) btn.textContent = theme === 'light' ? '☀️ Claro' : '🌙 Oscuro';
-            localStorage.setItem(THEME_KEY, theme);
+            if (persist) localStorage.setItem(THEME_KEY, theme);
         }
         function toggleTheme() {
-            const current = localStorage.getItem(THEME_KEY) || 'light';
+            const current = document.documentElement.getAttribute('data-theme') || systemTheme();
             applyTheme(current === 'light' ? 'dark' : 'light');
         }
+        systemDarkQuery.addEventListener('change', () => {
+            if (!localStorage.getItem(THEME_KEY)) applyTheme(systemTheme(), false);
+        });
         function renderExecutiveSummary(tasks) {
             const activeTasks = (tasks || []).filter(t => !t.archived);
             const total = activeTasks.length || 1;
@@ -8570,7 +8575,8 @@ ${learning.tags.map(t => `#${t}`).join(' ')}
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+            const savedTheme = localStorage.getItem(THEME_KEY);
+            applyTheme(savedTheme || systemTheme(), !!savedTheme);
             // Restore activity sidebar state
             if (localStorage.getItem('activity-collapsed') === 'true') {
                 const sidebar = document.getElementById('activity-sidebar');
