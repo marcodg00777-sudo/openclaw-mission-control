@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mission Control - MoltBot</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script>try{var t=localStorage.getItem('mc_theme');document.documentElement.setAttribute('data-theme',t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));}catch(e){}</script>
 </head>
 <body>
     <!-- Login Required Screen (shown when not authenticated) -->
@@ -105,6 +106,10 @@
         </div>
         <div class="header-right">
             <span class="live-indicator live" id="live-indicator">Live</span>
+            <div class="owner-credit" title="Mission Control by marcodg00777">
+                <span class="owner-credit-dot"></span>
+                <span>by&nbsp;<strong>Marco</strong></span>
+            </div>
             <button class="btn btn-secondary" id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">☀️ Claro</button>
             <button class="btn btn-secondary" onclick="pollForUpdates(); window.location.reload()">↻ Refresh</button>
 
